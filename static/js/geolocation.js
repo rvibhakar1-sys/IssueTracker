@@ -9,9 +9,22 @@ class LocationCapture {
         if (getLocationBtn) {
             getLocationBtn.addEventListener('click', () => this.getCurrentLocation());
         }
+        
+        // Automatically get location when page loads
+        this.autoGetLocation();
     }
 
-    getCurrentLocation() {
+    autoGetLocation() {
+        // Only auto-get location on the report page
+        if (window.location.pathname === '/report') {
+            // Small delay to ensure UI is ready
+            setTimeout(() => {
+                this.getCurrentLocation(true); // Pass true for auto mode
+            }, 1000);
+        }
+    }
+
+    getCurrentLocation(autoMode = false) {
         const statusDiv = document.getElementById('locationStatus');
         const latInput = document.getElementById('latitude');
         const lngInput = document.getElementById('longitude');
@@ -24,10 +37,14 @@ class LocationCapture {
         }
 
         // Show loading state
-        getLocationBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Getting location...';
-        getLocationBtn.disabled = true;
+        if (getLocationBtn && !autoMode) {
+            getLocationBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Getting location...';
+            getLocationBtn.disabled = true;
+        }
         
-        this.showStatus('info', 'Requesting location access...');
+        // Different messages for auto vs manual mode
+        const message = autoMode ? 'Automatically detecting your location...' : 'Requesting location access...';
+        this.showStatus('info', message);
 
         // Get current position
         navigator.geolocation.getCurrentPosition(
@@ -41,19 +58,32 @@ class LocationCapture {
                 lngInput.value = lng.toFixed(6);
 
                 // Show success message
-                this.showStatus('success', 
-                    `Location captured successfully! Accuracy: ${Math.round(accuracy)} meters`);
+                const successMessage = autoMode ? 
+                    `Location detected automatically! Accuracy: ${Math.round(accuracy)} meters` :
+                    `Location captured successfully! Accuracy: ${Math.round(accuracy)} meters`;
+                this.showStatus('success', successMessage);
 
                 // Try to get address from coordinates (reverse geocoding)
                 this.reverseGeocode(lat, lng);
 
-                // Reset button
-                getLocationBtn.innerHTML = '<i data-feather="check-circle" class="me-1"></i>Location Captured';
-                getLocationBtn.classList.remove('btn-outline-primary');
-                getLocationBtn.classList.add('btn-outline-success');
-                
-                // Re-initialize feather icons
-                feather.replace();
+                // Reset button only if not in auto mode
+                if (getLocationBtn && !autoMode) {
+                    getLocationBtn.innerHTML = '<i data-feather="check-circle" class="me-1"></i>Location Captured';
+                    getLocationBtn.classList.remove('btn-outline-primary');
+                    getLocationBtn.classList.add('btn-outline-success');
+                    
+                    // Re-initialize feather icons
+                    feather.replace();
+                } else if (autoMode && getLocationBtn) {
+                    // In auto mode, update button to show success
+                    getLocationBtn.innerHTML = '<i data-feather="check-circle" class="me-1"></i>Auto Location Set';
+                    getLocationBtn.classList.remove('btn-outline-primary');
+                    getLocationBtn.classList.add('btn-outline-success');
+                    getLocationBtn.disabled = false;
+                    
+                    // Re-initialize feather icons
+                    feather.replace();
+                }
             },
             (error) => {
                 let errorMessage = 'Unable to get location. ';
@@ -73,14 +103,26 @@ class LocationCapture {
                         break;
                 }
 
-                this.showStatus('error', errorMessage);
+                // Only show error if not in auto mode, or if it's a permission denied error
+                if (!autoMode || error.code === error.PERMISSION_DENIED) {
+                    this.showStatus('error', errorMessage);
+                }
 
                 // Reset button
-                getLocationBtn.innerHTML = '<i data-feather="crosshair" class="me-1"></i>Try Again';
-                getLocationBtn.disabled = false;
-                
-                // Re-initialize feather icons
-                feather.replace();
+                if (getLocationBtn && !autoMode) {
+                    getLocationBtn.innerHTML = '<i data-feather="crosshair" class="me-1"></i>Try Again';
+                    getLocationBtn.disabled = false;
+                    
+                    // Re-initialize feather icons
+                    feather.replace();
+                } else if (autoMode && getLocationBtn) {
+                    // In auto mode, keep button functional for manual retry
+                    getLocationBtn.innerHTML = '<i data-feather="crosshair" class="me-1"></i>Get My Location';
+                    getLocationBtn.disabled = false;
+                    
+                    // Re-initialize feather icons
+                    feather.replace();
+                }
             },
             {
                 enableHighAccuracy: true,
