@@ -1,0 +1,213 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Civic Issue Reporter{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-primary">
+                <div class="card-body text-center">
+                    <i data-feather="clipboard" class="mb-2" style="height: 2rem; width: 2rem;"></i>
+                    <h4 class="card-title">{{ stats.total }}</h4>
+                    <p class="card-text">Total Issues</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-warning">
+                <div class="card-body text-center text-dark">
+                    <i data-feather="clock" class="mb-2" style="height: 2rem; width: 2rem;"></i>
+                    <h4 class="card-title">{{ stats.pending }}</h4>
+                    <p class="card-text">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-info">
+                <div class="card-body text-center">
+                    <i data-feather="activity" class="mb-2" style="height: 2rem; width: 2rem;"></i>
+                    <h4 class="card-title">{{ stats.in_progress }}</h4>
+                    <p class="card-text">In Progress</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card bg-success">
+                <div class="card-body text-center">
+                    <i data-feather="check-circle" class="mb-2" style="height: 2rem; width: 2rem;"></i>
+                    <h4 class="card-title">{{ stats.resolved }}</h4>
+                    <p class="card-text">Resolved</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="search" class="form-label">Search Issues</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i data-feather="search"></i>
+                                </span>
+                                <input type="text" class="form-control" id="search" name="search" 
+                                       value="{{ search_query }}" placeholder="Search by title, description, or location...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">Filter by Status</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="all" {% if current_status == 'all' %}selected{% endif %}>All Statuses</option>
+                                <option value="Pending" {% if current_status == 'Pending' %}selected{% endif %}>Pending</option>
+                                <option value="In Progress" {% if current_status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                <option value="Resolved" {% if current_status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="category" class="form-label">Filter by Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="all" {% if current_category == 'all' %}selected{% endif %}>All Categories</option>
+                                {% for cat in categories %}
+                                    <option value="{{ cat }}" {% if current_category == cat %}selected{% endif %}>{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">&nbsp;</label>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-outline-primary">
+                                    <i data-feather="filter" class="me-1"></i>
+                                    Filter
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issues List -->
+    <div class="row">
+        {% if issues %}
+            {% for issue in issues %}
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="row g-0">
+                        {% if issue.photo_filename %}
+                        <div class="col-md-3">
+                            <img src="{{ url_for('uploaded_file', filename=issue.photo_filename) }}" 
+                                 class="img-fluid rounded-start h-100 object-fit-cover" 
+                                 alt="Issue photo" style="min-height: 200px;">
+                        </div>
+                        <div class="col-md-9">
+                        {% else %}
+                        <div class="col-12">
+                        {% endif %}
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title">{{ issue.title }}</h5>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge {{ issue.status_badge_class }}">{{ issue.status }}</span>
+                                        <span class="badge {{ issue.priority_badge_class }}">{{ issue.priority }}</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="card-text">{{ issue.description[:150] }}{% if issue.description|length > 150 %}...{% endif %}</p>
+                                
+                                <div class="row text-muted small mb-2">
+                                    {% if issue.location_text %}
+                                    <div class="col-md-6">
+                                        <i data-feather="map-pin" class="me-1"></i>
+                                        {{ issue.location_text }}
+                                    </div>
+                                    {% endif %}
+                                    {% if issue.category %}
+                                    <div class="col-md-6">
+                                        <i data-feather="tag" class="me-1"></i>
+                                        {{ issue.category }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="col-md-6">
+                                        <i data-feather="calendar" class="me-1"></i>
+                                        {{ issue.created_at.strftime('%Y-%m-%d %H:%M') }}
+                                    </div>
+                                    {% if issue.reporter_name %}
+                                    <div class="col-md-6">
+                                        <i data-feather="user" class="me-1"></i>
+                                        {{ issue.reporter_name }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <a href="{{ url_for('view_issue', issue_id=issue.id) }}" class="btn btn-outline-primary btn-sm">
+                                        <i data-feather="eye" class="me-1"></i>
+                                        View Details
+                                    </a>
+                                    
+                                    {% if issue.status != 'Resolved' %}
+                                        {% if issue.status == 'Pending' %}
+                                        <a href="{{ url_for('update_status', issue_id=issue.id, new_status='In Progress') }}" 
+                                           class="btn btn-outline-info btn-sm">
+                                            <i data-feather="play" class="me-1"></i>
+                                            Start Progress
+                                        </a>
+                                        {% endif %}
+                                        
+                                        <a href="{{ url_for('update_status', issue_id=issue.id, new_status='Resolved') }}" 
+                                           class="btn btn-outline-success btn-sm">
+                                            <i data-feather="check" class="me-1"></i>
+                                            Mark Resolved
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i data-feather="inbox" class="mb-3" style="height: 4rem; width: 4rem;"></i>
+                        <h4>No Issues Found</h4>
+                        <p class="text-muted">
+                            {% if search_query or current_status != 'all' or current_category != 'all' %}
+                                No issues match your current filters. Try adjusting your search criteria.
+                            {% else %}
+                                No issues have been reported yet. Be the first to report an issue!
+                            {% endif %}
+                        </p>
+                        <a href="{{ url_for('report') }}" class="btn btn-primary">
+                            <i data-feather="plus-circle" class="me-1"></i>
+                            Report New Issue
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-submit form when filters change (optional)
+    document.getElementById('status').addEventListener('change', function() {
+        this.form.submit();
+    });
+    
+    document.getElementById('category').addEventListener('change', function() {
+        this.form.submit();
+    });
+</script>
+{% endblock %}

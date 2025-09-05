@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block title %}Report Issue - Civic Issue Reporter{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title text-center mb-4">
+                        <i data-feather="alert-triangle" class="me-2"></i>
+                        Report New Civic Issue
+                    </h2>
+                    
+                    <form method="POST" enctype="multipart/form-data" id="reportForm">
+                        <!-- Issue Details -->
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                <label for="title" class="form-label">Issue Title *</label>
+                                <input type="text" class="form-control" id="title" name="title" required 
+                                       placeholder="Brief description of the issue">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="priority" class="form-label">Priority</label>
+                                <select class="form-select" id="priority" name="priority">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                    <option value="Critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Category</label>
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Select Category</option>
+                                <option value="Road">Road & Transportation</option>
+                                <option value="Utilities">Utilities (Water, Power, Gas)</option>
+                                <option value="Safety">Public Safety</option>
+                                <option value="Environment">Environment & Cleanliness</option>
+                                <option value="Infrastructure">Infrastructure</option>
+                                <option value="Parks">Parks & Recreation</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Detailed Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required
+                                      placeholder="Provide a detailed description of the issue, including what happened, when it occurred, and any other relevant information."></textarea>
+                        </div>
+
+                        <!-- Location Section -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i data-feather="map-pin" class="me-2"></i>
+                                    Location Information
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row mb-3">
+                                    <div class="col-md-8">
+                                        <label for="location_text" class="form-label">Location Description</label>
+                                        <input type="text" class="form-control" id="location_text" name="location_text"
+                                               placeholder="e.g., Main St & 1st Ave, near City Hall">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label">&nbsp;</label>
+                                        <div class="d-grid">
+                                            <button type="button" class="btn btn-outline-primary" id="getLocationBtn">
+                                                <i data-feather="crosshair" class="me-1"></i>
+                                                Get My Location
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="latitude" class="form-label">Latitude</label>
+                                        <input type="number" step="any" class="form-control" id="latitude" name="latitude" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="longitude" class="form-label">Longitude</label>
+                                        <input type="number" step="any" class="form-control" id="longitude" name="longitude" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div id="locationStatus" class="mt-2"></div>
+                            </div>
+                        </div>
+
+                        <!-- Photo Upload Section -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i data-feather="camera" class="me-2"></i>
+                                    Photo Evidence
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label for="photo" class="form-label">Upload Photo (Optional)</label>
+                                    <input class="form-control" type="file" id="photo" name="photo" accept="image/*">
+                                    <div class="form-text">
+                                        Accepted formats: PNG, JPG, JPEG, GIF, WebP. Maximum size: 16MB.
+                                        <br>
+                                        <span class="text-info">Tip: Use your mobile camera to capture the issue directly.</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-grid d-md-none">
+                                    <button type="button" class="btn btn-outline-primary" id="takePictureBtn">
+                                        <i data-feather="camera" class="me-1"></i>
+                                        Take Picture
+                                    </button>
+                                </div>
+                                
+                                <div id="imagePreview" class="mt-3 d-none">
+                                    <img id="previewImg" class="img-thumbnail" style="max-width: 300px; max-height: 300px;">
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" id="removeImageBtn">
+                                            <i data-feather="trash-2" class="me-1"></i>
+                                            Remove Image
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reporter Information -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i data-feather="user" class="me-2"></i>
+                                    Reporter Information (Optional)
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="reporter_name" class="form-label">Name</label>
+                                        <input type="text" class="form-control" id="reporter_name" name="reporter_name"
+                                               placeholder="Your name">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="reporter_email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="reporter_email" name="reporter_email"
+                                               placeholder="your.email@example.com">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="reporter_phone" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="reporter_phone" name="reporter_phone"
+                                           placeholder="(555) 123-4567">
+                                </div>
+                                <small class="text-muted">
+                                    Providing contact information helps us follow up on your report, but it's completely optional.
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('index') }}" class="btn btn-outline-secondary me-md-2">
+                                <i data-feather="arrow-left" class="me-1"></i>
+                                Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i data-feather="send" class="me-1"></i>
+                                Submit Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/geolocation.js') }}"></script>
+<script src="{{ url_for('static', filename='js/photo-upload.js') }}"></script>
+<script>
+    // Form validation
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        const title = document.getElementById('title').value.trim();
+        const description = document.getElementById('description').value.trim();
+        
+        if (!title || !description) {
+            e.preventDefault();
+            alert('Please fill in the title and description fields.');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Submitting...';
+        submitBtn.disabled = true;
+    });
+</script>
+{% endblock %}
